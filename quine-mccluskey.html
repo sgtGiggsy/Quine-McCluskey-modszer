@@ -1,0 +1,1269 @@
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Quine-McCluskey egyszerűsítési módszer</title>
+    <style>
+        body 
+        {
+            width: 95vw;
+            color: #141414;
+            background-color: #c4cccc;
+            font-family: Cascadia Code, Verdana, Geneva, Tahoma, sans-serif;
+        }
+        .karnaughtablak table, #primimplikanstabla table {
+            border-collapse: collapse;
+        }
+
+        .karnaughtablak table td, #primimplikanstabla table td {
+            border: 2px solid black;
+            text-align: center;
+        }
+
+        .karnaughtablak table td {
+            width: 5em;
+            height: 5em;
+        }
+
+        .karnaughtablak table tr:first-child {
+            border-right: 0;
+            border-left: 0;
+        }
+
+        .karnaughtablak table tr:first-child td, .karnaughtablak table tr td:first-child,
+        #primimplikanstabla table tr td:first-child {
+            border-top: 0;
+            border-bottom: 0;
+            border-left: 0;
+        }
+
+        .karnaughtablak table tr:first-child td {
+            border-right: 0;
+        }
+
+        .karnaughtablak table tr:last-child td, .karnaughtablak table tr td:last-child {
+            border-top: 0;
+            border-right: 0;
+            border-bottom: 0;
+        }
+
+        .karnaughtablak table tr:last-child td {
+            border-left: 0;
+        }
+
+        .karnaughtablak td {
+            position: relative;
+        }
+
+        .karnaughtablak td span {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            padding: 0.2em;
+        }
+
+        .karnaughtablak p {
+            font-size: 1.2em;
+        }
+
+        .eredmenyek {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .karnaughtablak {
+            grid-column-start: 2;
+            grid-column-end: 3;
+        }
+
+        .szamolas {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .oszlopok {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .oszlopok div {
+            min-width: max-content;
+            margin: 0 1em;
+        }
+
+        #mintermszamok div {
+            padding: 0.5em 0;
+        }
+
+        .formstyle {
+            width: 40vw;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+        }
+
+        .formstyle input {
+            width: 100%;
+            background-color: #a1a1a1;
+        }
+
+        button {
+            width: 1.7em;
+            height: 1.7em;
+            background-color: #222328;
+            color: #c4cccc;
+            font-size: 1.3em;
+        }
+    </style>
+</head>
+<body>
+    <h1>A Quine-McCluskey egyszerűsítési módszer</h1>
+    <p style="font-size: 1.1em; margin-bottom: 0.5em;">Kérlek add meg a változók számát, valamint a használni kívánt minterm sorszámokat vesszővel elválaszatva!</p>
+    <div class="eredmenyek">
+        <div class="szamolas">
+            <form id="mintermszamok">
+                <div class="formstyle">
+                    <div>
+                        <label>Változók száma</label>
+                    </div>
+                    <div>
+                        <input type="text" name="valtozoszam" id="valtozoszam" value=""/>
+                    </div>
+                    <div>
+                        <label>Minterm sorszámok</label>
+                    </div>
+                    <div>
+                        <input type="text" name="mintermek" id="mintermek" value=""/>
+                    </div>
+                    <div style="grid-column-start: 1; grid-column-end: 3;">
+                        <input type="submit" value="Kiszámol">
+                    </div>
+                </div>
+            </form>
+            <div class="oszlopok">
+                <div id="szamolas-1">
+                </div>
+                <div id="szamolas-2">
+                </div>
+                <div id="szamolas-3">
+                </div>
+                <div id="szamolas-4">
+                </div>
+                <div id="szamolas-5">
+                </div>
+                <div id="szamolas-6">
+                </div>
+                <div id="szamolas-7">
+                </div>
+                <div id="szamolas-8">
+                </div>
+                <div id="szamolas-9">
+                </div>
+                <div id="szamolas-10">
+                </div>
+            </div>
+
+            <div class="vegeredmeny">
+                <div id="primimplikansok">
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="karnaughtablak">
+                <div id="aktualisosszevonas"></div>
+                <div id="mintermfej" style="display: none;">
+                    <h2>Mintermtábla</h2>
+                    <div>
+                        <button onclick="animacioControl('prev')">⏮</button><button id="startpause" onclick="animacioControl('startpause')">⏸</button><button onclick="animacioControl('next')">⏭</button>
+                    </div>
+                </div>
+                <div id="mintermtabla-2" style="display: none;">
+                    <table>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td>B<hr></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td id="2-0"><span>0</span><p id="p2-0"></p></td>
+                            <td id="2-1"><span>1</span><p id="p2-1"></p></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td style="transform: rotate(270deg)"><p style="transform: rotate(90deg); margin-bottom: 0;">A</p><hr></td>
+                            <td id="2-2"><span>2</span><p id="p2-2"></p></td>
+                            <td id="2-3"><span>3</span><p id="p2-3"></p></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div id="mintermtabla-3" style="display: none;">
+                    <table>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th colspan="2">B<hr></th>
+                            <th></th>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td id="3-0"><span>0</span><p id="p3-0"></p></td>
+                            <td id="3-1"><span>1</span><p id="p3-1"></p></td>
+                            <td id="3-3"><span>3</span><p id="p3-3"></p></td>
+                            <td id="3-2"><span>2</span><p id="p3-2"></p></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td style="transform: rotate(270deg)"><p style="transform: rotate(90deg); margin-bottom: 0;">A</p><hr></td>
+                            <td id="3-4"><span>4</span><p id="p3-4"></p></td>
+                            <td id="3-5"><span>5</span><p id="p3-5"></p></td>
+                            <td id="3-7"><span>7</span><p id="p3-7"></p></td>
+                            <td id="3-6"><span>6</span><p id="p3-6"></p></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td colspan="2"><hr>C</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div id="mintermtabla-4" style="display: none;">
+                    <table>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th colspan="2">C<hr></th>
+                            <th></th>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td id="4-0"><span>0</span><p id="p4-0"></p></td>
+                            <td id="4-1"><span>1</span><p id="p4-1"></p></td>
+                            <td id="4-3"><span>3</span><p id="p4-3"></p></td>
+                            <td id="4-2"><span>2</span><p id="p4-2"></p></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td id="4-4"><span>4</span><p id="p4-4"></p></td>
+                            <td id="4-5"><span>5</span><p id="p4-5"></p></td>
+                            <td id="4-7"><span>7</span><p id="p4-7"></p></td>
+                            <td id="4-6"><span>6</span><p id="p4-6"></p></td>
+                            <td rowspan="2" style="transform: rotate(90deg)"><p style="transform: rotate(270deg); margin-bottom: 0;">B</p><hr></td>
+                        </tr>
+                        <tr>
+                            <td rowspan="2" style="transform: rotate(270deg)"><p style="transform: rotate(90deg); margin-bottom: 0;">A</p><hr></td>
+                            <td id="4-12"><span>12</span><p id="p4-12"></p></td>
+                            <td id="4-13"><span>13</span><p id="p4-13"></p></td>
+                            <td id="4-15"><span>15</span><p id="p4-15"></p></td>
+                            <td id="4-14"><span>14</span><p id="p4-14"></p></td>
+                        </tr>
+                        <tr>
+                            <td id="4-8" style="border: 2px solid black;"><span>8</span><p id="p4-8"></p></td>
+                            <td id="4-9"><span>9</span><p id="p4-9"></p></td>
+                            <td id="4-11"><span>11</span><p id="p4-11"></p></td>
+                            <td id="4-10"><span>10</span><p id="p4-10"></p></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td colspan="2"><hr>D</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div id="mintermtabla-5" style="display: none;">
+                    <table>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th colspan="4">D<hr></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th colspan="4" style="border: 0">C<hr></th>
+                            <th></th>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td id="5-0"><span>0</span><p id="p5-0"></p></td>
+                            <td id="5-1"><span>1</span><p id="p5-1"></p></td>
+                            <td id="5-3"><span>3</span><p id="p5-3"></p></td>
+                            <td id="5-2"><span>2</span><p id="p5-2"></p></td>
+                            <td id="5-6"><span>6</span><p id="p5-6"></p></td>
+                            <td id="5-7"><span>7</span><p id="p5-7"></p></td>
+                            <td id="5-5"><span>5</span><p id="p5-5"></p></td>
+                            <td id="5-4"><span>4</span><p id="p5-4"></p></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td id="5-8"><span>8</span><p id="p5-8"></p></td>
+                            <td id="5-9"><span>9</span><p id="p5-9"></p></td>
+                            <td id="5-11"><span>11</span><p id="p5-11"></p></td>
+                            <td id="5-10"><span>10</span><p id="p5-10"></p></td>
+                            <td id="5-14"><span>14</span><p id="p5-14"></p></td>
+                            <td id="5-15"><span>15</span><p id="p5-15"></p></td>
+                            <td id="5-13"><span>13</span><p id="p5-13"></p></td>
+                            <td id="5-12"><span>12</span><p id="p5-12"></p></td>
+                            <td rowspan="2" style="transform: rotate(90deg)"><p style="transform: rotate(270deg); margin-bottom: 0;">B</p><hr></td>
+                        </tr>
+                        <tr>
+                            <td rowspan="2" style="transform: rotate(270deg)"><p style="transform: rotate(90deg); margin-bottom: 0;">A</p><hr></td>
+                            <td id="5-24"><span>24</span><p id="p5-24"></p></td>
+                            <td id="5-25"><span>25</span><p id="p5-25"></p></td>
+                            <td id="5-27"><span>27</span><p id="p5-27"></p></td>
+                            <td id="5-26"><span>26</span><p id="p5-26"></p></td>
+                            <td id="5-30"><span>30</span><p id="p5-30"></p></td>
+                            <td id="5-31"><span>31</span><p id="p5-31"></p></td>
+                            <td id="5-29"><span>29</span><p id="p5-29"></p></td>
+                            <td id="5-28"><span>28</span><p id="p5-28"></p></td>
+                        </tr>
+                        <tr>
+                            <td id="5-16" style="border: 2px solid black;"><span>16</span><p id="p5-16"></p></td>
+                            <td id="5-17"><span>17</span><p id="p5-17"></p></td>
+                            <td id="5-19"><span>19</span><p id="p5-19"></p></td>
+                            <td id="5-18"><span>18</span><p id="p5-18"></p></td>
+                            <td id="5-22"><span>22</span><p id="p5-22"></p></td>
+                            <td id="5-23"><span>23</span><p id="p5-23"></p></td>
+                            <td id="5-21"><span>21</span><p id="p5-21"></p></td>
+                            <td id="5-20"><span>20</span><p id="p5-20"></p></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td colspan="2"><hr>E</td>
+                            <td></td>
+                            <td></td>
+                            <td colspan="2"><hr>E</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div id="primimplikanstabla"></div>
+        </div>
+    </div>
+    <div id="fuggvenykiir" style='font-size: 1.4em; text-align: center;'>
+    </div>
+</body>
+<script>
+    let szinek = [ "teal", "orange", "aquamarine", "bisque", "greenyellow", "burlywood", "gray", "cadetblue", "dodgerblue", "crimson", "green", "orchid", "moccasin", "lightgreen", "lightskyblue", "deeppink", "powderblue", "seagreen", "steelblue" ];
+    let primimplikansok = [];
+    let mintermazonosito = 0;
+    let jelenframe = 0;
+    let animacioallapot = true;
+    let animacio, valtozoszam;
+
+    document.getElementById("mintermszamok").addEventListener("submit", function (e){
+        e.preventDefault();
+
+        resetEverything();
+        let szetvalogatott = [];
+        let oszlopok = [];
+        let essential;
+        let vegeredmeny = "Q = ";
+        let mintermek = document.getElementById("mintermek");
+        let mintermarray = sanitzeMintermArray(mintermek.value.split(","));
+        let mintermdarabszam = mintermarray.length;
+        valtozoszam = document.getElementById("valtozoszam").value;
+
+        let bemenethiba = inputValidation(valtozoszam, mintermarray);
+
+        if(bemenethiba)
+        {
+            alert(bemenethiba);
+        }
+        else
+        {
+            // Minterm bináris - decimális értéket tároló objektumok létrehozása
+            let mintermobjectsarray = createMintermBinaris(valtozoszam, mintermarray);
+
+            let objektumszam = mintermobjectsarray.length;
+
+            // A mintermeket szétszedjük külön tömbökbe a súlyuk alapján
+            for(let i = 0; i < objektumszam; i++)
+            {
+                const temp = {
+                        mintermek       :   [mintermobjectsarray[i]],
+                        string          :   mintermobjectsarray[i].decimalis,
+                        megtalalt       :   false,
+                        primimplikans   :   true,
+                        primazonosito   :   null,
+                        kulonbseg       :   0,
+                        kifejezes       :   null,
+                        suly            :   mintermobjectsarray[i].suly,
+                        id              :   mintermazonosito
+                    };
+
+                mintermazonosito++;
+                if(szetvalogatott[mintermobjectsarray[i].suly])
+                {
+                    szetvalogatott[mintermobjectsarray[i].suly].push(temp);
+                }
+                else
+                {
+                    szetvalogatott[mintermobjectsarray[i].suly] = [temp];
+                }
+            }
+
+            // Elvégezzük a mintermek összevetését, amíg vannak összevonható mintermek
+            for(let i = 0; i < mintermdarabszam; i++)
+            {
+                if(i == 0)
+                {
+                    oszlopok[i] = szetvalogatott;
+                }
+                else
+                {
+                    oszlopok[i] = minTermOsszevetes(oszlopok[i - 1]);
+                }
+                if(oszlopok[i].length == 0)
+                {
+                    oszlopok.pop();
+                    break;
+                }
+            }
+
+            // A következő lépés a kapott prímimplikánsok kigyűjtése egy tömbbe,
+            // valamint a minterm összevonások eredményének képernyőre írása
+            let oszlopokszama = oszlopok.length;
+            let primazonosito = "a";
+            for(let i = 0; i < oszlopokszama; i++)
+            {
+                let temp = primKivalaszt(oszlopok[i], primimplikansok, primazonosito);
+                primimplikansok = temp['primimplikansok'];
+                primazonosito = temp['primazonosito'];
+                oszlopMegjelenit(oszlopok[i], i + 1);
+            }
+
+            // Ezt követően jön az esszenciális prímimplikánsok megállapítása
+            // Ha csak egy prím implikánst talált a program, automatikusan az lesz az esszenciális
+            let primimplikansszam = primimplikansok.length;
+            if(primimplikansszam == 1)
+            {
+                essential = primimplikansok;
+            }
+            else
+            {
+                essential = findEssentialPrime(primimplikansok, mintermarray);
+                if(essential.length != primimplikansszam)
+                {
+                    essential = fennmaradoPrimek(primimplikansok, essential, mintermarray);
+                }
+            }
+
+            // Ezt a prímimlikánsok képernyőkre írása követi
+            let primdiv = document.getElementById("primimplikansok");
+            primdiv.innerHTML += "<h2>A táblázat prímimplikánsai</h2>";
+            let finalprimedb = essential.length;
+            for(let i = 0; i < primimplikansszam; i++)
+            {
+                primdiv.innerHTML += "<p>(" + primimplikansok[i].primazonosito + ") " + primimplikansok[i].string + "</p>";
+            }
+
+            primdiv.innerHTML += "<h2>A végső függvényben felhasznált prímimplikánsok</h2>";
+            let temp = 0;
+            let csere = 0;
+            // Nem szükséges lépés, de zavarja a szemem, hogy nincs sorban, ezért sorbarendezzük a listát a prímazonosítók szerint
+            // Egyszerű buborék rendezés, de valószínű sosem lesz olyan mennyiségű bevitt adat, ami érezhetően belassítaná a programot.
+            do
+            {
+                csere = 0;
+                for(let i = 0; i < finalprimedb; i++)
+                {
+                    if(essential[i+1] !== undefined && (essential[i].primazonosito.toLowerCase().localeCompare(essential[i+1].primazonosito.toLowerCase(), navigator.languages[0] || navigator.language, {numeric: true, ignorePunctuation: true})) > 0)
+                    {
+                        temp = essential[i];
+                        essential[i] = essential[i+1];
+                        essential[i+1] = temp;
+                        csere++;
+                    }
+                }
+            } while(csere != 0);
+
+            // Ezután felírjuk a függvény prímimplikáns táblázatát is a jobb szemléltetés érdekében
+            let primimplikanstabla = document.getElementById('primimplikanstabla');
+            primimplikanstabla.innerHTML += "<h2>Prímimplikáns táblázat</h2>";
+            let tablazat = "<table style='width: 100%;'>";
+            for(let p = 0; p < primimplikansszam; p++)
+            {
+                if(p == 0)
+                {
+                    tablazat += "<thead><tr>";
+                        tablazat += "<th></th>";
+                    for(let m = 0; m < mintermdarabszam; m++)
+                    {
+                        tablazat += "<th>" + mintermarray[m] + "</th>";
+                    }
+                    tablazat += "</tr></thead><tbody>";
+                }
+                if(essential.includes(primimplikansok[p]))
+                {
+                    tablazat += "<tr style='background-color: grey'>";
+                }
+                else
+                {
+                    tablazat += "<tr>"
+                }
+                tablazat += "<td>" + primimplikansok[p].primazonosito + "</td>";
+                for(let m = 0; m < mintermdarabszam; m++)
+                {
+                    let mintmdb = primimplikansok[p].mintermek.length;
+                    tablazat += "<td>";
+                    for(i = 0; i < mintmdb; i++)
+                    {
+                        if(primimplikansok[p].mintermek[i].decimalis == mintermarray[m])
+                        {
+                            tablazat += "X";
+                        }
+                    }
+                    tablazat += "</td>";
+                }
+                tablazat += "</tr>";
+            }
+            tablazat += "</table>";
+            primimplikanstabla.innerHTML += tablazat;
+
+            // Most következik a függvény végeredményének kiszámítása
+            for(let i = 0; i < primimplikansszam; i++)
+            {
+                let kiesobitek = primimplikansok[i].kulonbseg.toString().split(",");
+                let kiesobitdb = kiesobitek.length;
+                
+                // Mivel mindegy, melyik mintermet választjuk ki egy prímimplikánsból,
+                // a 0. elemet választjuk ki, mert az mindig létezik.
+                // Ezt követően végigmegyünk a kiválasztott minterm bitjein, és kijelöljük a kieső darabokat közülük.
+                // A ciklus végén a megmaradó biteket hozzáadjuk a kifejezéshez
+                let binariesertek = primimplikansok[i].mintermek[0].bitenkent;
+                let temp = "";
+                for(let b = 0; b < valtozoszam; b++)
+                {
+                    let kiesik = false;
+                    for(let k = kiesobitdb-1; k >= 0; k--)
+                    {
+                        let kiesobithelye = binarisHely(kiesobitek[k], valtozoszam);
+                        if(kiesobithelye == b)
+                        {
+                            kiesik = true;
+                            break;
+                        }
+                    }
+                    if(!kiesik)
+                    {
+                        temp += szamToKarakter(b);
+                        if(primimplikansok[i].mintermek[0].bitenkent[b] == 0)
+                        {
+                            temp += "&#773;";
+                        }
+                    }
+                }
+
+                primimplikansok[i].kifejezes = temp;
+                if(essential.includes(primimplikansok[i]))
+                {
+                    vegeredmeny += temp;
+                    vegeredmeny += " + ";
+                }
+            }
+
+            // Mivel a tömbön végigiterálás után maradt pár fölösleges karakter a string végén, azt levágjuk
+            vegeredmeny = vegeredmeny.slice(0,-3);
+
+            // Minterm táblák megjelenítése
+            if(valtozoszam > 1 && valtozoszam < 6)
+            {
+                document.getElementById("mintermfej").style.display = "";
+                for(let i = 2; i < 6; i++)
+                {
+                    tablazatdiv = document.getElementById("mintermtabla-" + i);
+                    if(i == valtozoszam)
+                    {
+                        tablaKitolt(i, valtozoszam, mintermarray);
+                        tablazatdiv.style.display = "";
+                    }
+                    else
+                    {
+                        tablazatdiv.style.display = "none";
+                    }
+                }
+
+                osszevonasokJelzese(primimplikansok, valtozoszam);
+            }
+
+            // A felhasznált prímimplikánsok külön kiírása a nekik megfelelő függvény értékkel együtt
+            for(let i = 0; i < finalprimedb; i++)
+            {
+                primdiv.innerHTML += "<p>(" + essential[i].primazonosito + ") " + essential[i].string + " (" + essential[i].kulonbseg + ") => " + essential[i].kifejezes + "</p>";
+            }
+
+            // Utolsó lépésként az oldal aljára kírjuk a kész függvényt
+            let fuggvenykiir = document.getElementById("fuggvenykiir");
+            fuggvenykiir.innerHTML = "<h2>Legegyszerűbb minterm alak</h2><p>" + vegeredmeny + "</p>";
+        }
+    });
+
+    function inputValidation(valtozoszam, mintermarray)
+    {
+        // Ellenőrizzük, hogy a felhasználó valós, használható adatokat adott-e meg.
+        // Ha a megadott érték nem egész szám, vagy egynél kisebb, akkor a felhasználó hibaüzenetet kap
+        if(!Number.isInteger(valtozoszam * 1) || valtozoszam < 1)
+        {
+            return "Nem nullánál nagyobb pozitív egész számot adtál meg változószámként!";
+        }
+        else
+        {
+            // Ellenőrizzük, hogy a felhasználó jó mintermeket adott-e meg
+            let hossz = mintermarray.length;
+            let maxminterm = (Math.pow(2, valtozoszam) - 1);
+            let helyes = false;
+            for(let i = 0; i < hossz; i++)
+            {
+                // Ha valamely megadott minterm nem pozitív egész szám (vagy null), vagy nagyobb, mint a változószám
+                // alapján lehető legnagyobb minterm, a felhasználó hibaüzenetet kap
+                if(!Number.isInteger(mintermarray[i] * 1) || mintermarray[i] < 0 || mintermarray[i] > maxminterm)
+                {
+                    return "A megadott minterm sorszámok egyike nem szám, vagy nullánál kisebb, vagy nagyobb, mint ami a változószám alapján lehetséges";
+                }
+                else
+                {
+                    helyes = true;
+                }
+            }
+            if(helyes)
+            {
+                return false;
+            }
+        }
+    }
+
+    function tablaKitolt(tablasorszam, valtozoszam, mintermarray)
+    {
+        // Ez a függvény tölti fel a mintermtáblát a felhasználó által bevitt értékekkel
+        let maxminterm = (Math.pow(2, valtozoszam));
+        let mintermszam = mintermarray.length;
+        for(let i = 0; i < maxminterm; i++)
+        {
+            let cella = document.getElementById("p" + tablasorszam + "-" + i);
+            cella.textContent = "0";
+            for(let j = 0; j < mintermszam; j++)
+            {
+                let szam = mintermarray[j] * 1;
+                if(mintermarray[j] == i)
+                cella.textContent = "1";
+            }
+        }
+    }
+
+    function sanitzeMintermArray(origmintermarray)
+    {
+        // Ez a függvény tisztítja meg a felhasználó által megadott bemenetet a duplán szereplő számoktól és szóközöktől
+        let temparray = [], mintermarray = [];
+        let mintermszam = origmintermarray.length;
+        let elozoszam;
+
+        // Előbb mindenképp trimmelni kellett az eredményt, mert ha bent maradt egy szóköz,
+        // akkor a sort metódus már rosszul rendezte sorba a számokat, és a szóközzel, valamint szóköz nélkül bevitt,
+        // amúgy azonos számot különbözőnek vette
+        for(let i = 0; i < mintermszam; i++)
+        {
+            temparray.push(origmintermarray[i].trim());
+        }
+
+        temparray.sort(function(a, b){return a-b});
+
+        for(let i = 0; i < mintermszam; i++)
+        {
+            // Itt szűrjük ki a kettős bevitelt. Ha a felhasználó kétszer ad is meg egy mintermet
+            // A program innentől csak egyszer veszi.
+            if(temparray[i] != elozoszam)
+            {
+                mintermarray.push(temparray[i]);
+            }
+            elozoszam = temparray[i];
+        }
+
+        return mintermarray
+    }
+
+    function createMintermBinaris(valtozoszam, mintermarray)
+    {
+        let binaristomb = [];
+        let mintermszam = mintermarray.length;
+
+        for(let i = 0; i < mintermszam; i++)
+        {
+            let szam = mintermarray[i] * 1; // Erre azért van szükség, hogy int legyen a szam változó
+            let binarisertek = szam.toString(2).padStart(valtozoszam, 0) // A számot binárissá alakítjuk, majd kiegészítjük a megfelelő számú nullával
+            let binarisbitenkent = binarisertek.split("");
+
+            const tempertek = {
+                decimalis       : szam,
+                binaris         : binarisertek,
+                bitenkent       : binarisbitenkent,
+                suly            : (binarisertek.match(/1/g) || []).length,
+                primimplikans   : false
+            }
+
+            binaristomb.push(tempertek);
+        }
+
+        binaristomb.sort((a, b) => a.decimalis - b.decimalis);
+        binaristomb.sort((a, b) => a.suly - b.suly);
+
+        return binaristomb;
+    }
+
+    function verifyKettoHatvanya(szam)
+    {
+        // Ez a függvény állapítja meg, hogy egy szám kettő hatványa-e
+        if(szam == 0)
+        {
+            return false;
+        }
+
+        while(szam != 1)
+        {
+            if(szam % 2 != 0)
+            {
+                return false;
+            }
+
+            szam = szam / 2;
+        }
+        return true; 
+    }  
+
+    function minTermOsszevetes(szetvalogatott, debug)
+    {
+        let tombdarab = szetvalogatott.length;
+        let kimenettomb = [];
+        let sulykulonbseglepes = null;
+        for(let i = 0; i < tombdarab; i++)
+        {
+            // Előszőr ellenőrizzük, hogy létezik-e az adott súllyal rendelkező mintermeket tartalmazó tömb
+            if(szetvalogatott[i] !== undefined)
+            {
+                if(!sulykulonbseglepes)
+                {
+                    sulykulonbseglepes = szetvalogatott[i][0].mintermek.length;
+                }
+                kisebbsulyudarab = szetvalogatott[i].length;
+                for(let k = 0; k < kisebbsulyudarab; k++)
+                {
+                    // Következő lépésként ellenőrizzük, hogy az eggyel nagyobb súlyú mintermek tömbje
+                    // létezik-e. Ha nem, akkor nincs mit összevonni, és az adott minterm prímimplikánssá lesz minősítve
+                    let felhasznalt = false;
+                    if(szetvalogatott[i + sulykulonbseglepes] !== undefined)
+                    {
+                        nagyobbsulyudarab = szetvalogatott[i + sulykulonbseglepes].length;
+                        for(let n = 0; n < nagyobbsulyudarab; n++)
+                        {
+                            // Mivel két szomszédos bináris súlyú mintermet vetünk össze, így a három szükséges feltétel egyike
+                            // automatikusan teljesül. Most a másik két feltételt ellenőrizzük.
+                            // 1. Hogy a kisebb súlyú minterm decimális értéke kisebb-e
+                            // 2. Hogy a számok közti eltérés 2 n-dik hatványa-e
+                            // Hogy ne kelljen külön függvényt írni az első oszlophoz, itt is ellenőrzi a "párok" közti
+                            // súlykülönbséget, de az első oszlop elemei között az alapértelmezetten null,
+                            // csak a második oszloptól van jelentősége
+                            if(szetvalogatott[i][k].kulonbseg == szetvalogatott[i + sulykulonbseglepes][n].kulonbseg)
+                            {
+                                let sulykulonbseg = szetvalogatott[i + sulykulonbseglepes][n].mintermek[0].decimalis - szetvalogatott[i][k].mintermek[0].decimalis;
+                                if(szetvalogatott[i][k].mintermek[0].decimalis < szetvalogatott[i + sulykulonbseglepes][n].mintermek[0].decimalis && verifyKettoHatvanya(sulykulonbseg))
+                                {
+                                    felhasznalt = true;
+                                    let sorban = true;
+                                    let kimenetstring = "";
+                                    let stringkulonbseg = null;
+                                    let tempmintermarray = [];
+
+                                    // Elkészítjük az új minterm objektumot, ami tartalmazza mindkét súly összes elemét
+                                    // Tekintve, hogy az első megtalált sorozat MINDIG sorban van, ha az itt létrejövő tömb
+                                    // nincs sorban (aminek az ellenőrzése lejjebb történik),
+                                    // úgy az elemeit megtaláltnak jelezzük, de az új oszlophoz nem adjuk hozzá.
+                                    let ksdb = szetvalogatott[i][k].mintermek.length; // Először a kisebb súlyú elem(ek)kel kezdünk
+                                    for(let t = 0; t < ksdb; t++)
+                                    {
+                                        tempmintermarray.push(szetvalogatott[i][k].mintermek[t]);
+                                        kimenetstring += szetvalogatott[i][k].mintermek[t].decimalis + ",";
+                                    }
+                                    
+                                    // A következő lépésben a nagyobb súlyú eleme(ke)t adjuk hozzá
+                                    let nsdb = szetvalogatott[i + sulykulonbseglepes][n].mintermek.length;
+                                    for(let t = 0; t < nsdb; t++)
+                                    {
+                                        tempmintermarray.push(szetvalogatott[i + sulykulonbseglepes][n].mintermek[t]);
+                                        kimenetstring += szetvalogatott[i + sulykulonbseglepes][n].mintermek[t].decimalis + ",";
+                                    }
+                                    kimenetstring = kimenetstring.slice(0,-1);
+
+                                    tempmintermarrdb = tempmintermarray.length;
+                                    for(let tm = 0; tm < tempmintermarrdb; tm++)
+                                    {
+                                        if(tm < tempmintermarrdb - 1 && tempmintermarray[tm].decimalis > tempmintermarray[tm + 1].decimalis)
+                                        {
+                                            sorban = false;
+                                            break;
+                                        }
+                                    }
+
+                                    if(sorban)
+                                    {
+                                        if(szetvalogatott[i][k].kulonbseg)
+                                        {
+                                            stringkulonbseg = szetvalogatott[i][k].kulonbseg + ",";
+                                        }
+
+                                        let osszsuly = szetvalogatott[i][k].suly + szetvalogatott[i + sulykulonbseglepes][n].suly;
+
+                                        const tempmegtalalt = {
+                                            mintermek       :   tempmintermarray,
+                                            string          :   kimenetstring,
+                                            megtalalt       :   false,
+                                            primimplikans   :   true,
+                                            primazonosito   :   null,
+                                            kulonbseg       :   stringkulonbseg + sulykulonbseg,
+                                            kifejezes       :   null,
+                                            suly            :   osszsuly,
+                                            id              :   mintermazonosito
+                                        }
+                                        mintermazonosito++;
+
+                                        if(kimenettomb[osszsuly])
+                                        {
+                                            kimenettomb[osszsuly].push(tempmegtalalt);
+                                        }
+                                        else
+                                        {
+                                            kimenettomb[osszsuly] = [tempmegtalalt];
+                                        }
+                                    }
+
+                                    szetvalogatott[i + sulykulonbseglepes][n].primimplikans = false;
+                                    szetvalogatott[i + sulykulonbseglepes][n].megtalalt = true;
+                                }
+                            }
+                        }
+                    }
+
+                    // Ha az elemet nem használtuk most fel, és korábban sem találtuk meg, prím implikánsnak jelezzük
+                    if(!felhasznalt && !szetvalogatott[i][k].megtalalt)
+                    {
+                        szetvalogatott[i][k].primimplikans = true;
+                        szetvalogatott[i][k].megtalalt = false;
+                    }
+                    else
+                    {
+                        szetvalogatott[i][k].primimplikans = false;
+                        szetvalogatott[i][k].megtalalt = true;
+                    }
+                }
+            }
+        }
+
+        return kimenettomb;
+    }
+
+    function primKivalaszt(mintermtomb, primimplikansok, primazonosito)
+    {
+        // Ezzel a függvénnyel válogatjuk ki egy oszlop prímimplikánsait
+        let sulyszam = mintermtomb.length;
+
+        for(let i = 0; i < sulyszam; i++)
+        {
+            if(mintermtomb[i] !== undefined)
+            {
+                let mintermdarab = mintermtomb[i].length;
+                for(let j = 0; j < mintermdarab; j++)
+                {
+                    if(mintermtomb[i][j].primimplikans)
+                    {
+                        mintermtomb[i][j].primazonosito = primazonosito;
+                        primimplikansok.push(mintermtomb[i][j]);
+                        primazonosito = kovetkezoBetu(primazonosito);
+                    }
+                }
+            }
+        }
+
+        return {primimplikansok, primazonosito};
+    }
+
+    function oszlopMegjelenit(mintermtomb, oszlopszam)
+    {
+        let oszlop = document.getElementById("szamolas-" + oszlopszam);
+        oszlop.innerHTML = "<h2>" + numberToRoman(oszlopszam) + ".</h2>";
+        let sulyszam = mintermtomb.length;
+        let elozosuly = "suly";
+
+        for(let i = 0; i < sulyszam; i++)
+        {
+            if(mintermtomb[i] !== undefined)
+            {
+                let mintermdarab = mintermtomb[i].length;
+                for(let j = 0; j < mintermdarab; j++)
+                {
+                    let kulonbsegek = "";
+                    if(mintermtomb[i][j].kulonbseg != 0)
+                    {
+                        kulonbsegek = "&nbsp<span style='float: right; font-size: 0.8em;'>(" + mintermtomb[i][j].kulonbseg + ")";
+                    }
+
+                    if(mintermtomb[i][j].megtalalt)
+                    {
+                        kulonbsegek += " ✔";
+                    }
+                    else
+                    {
+                        kulonbsegek += " <strong style='font-size: 1.4em; color: red; border-radius: 50%; border: 3px solid #000; padding: 0.2em'>" + mintermtomb[i][j].primazonosito + "</strong>";
+                    }
+
+                    kulonbsegek += "</span>";
+
+                    if(mintermtomb[i][j].suly != elozosuly)
+                    {
+                        elozosuly = mintermtomb[i][j].suly;
+                        oszlop.innerHTML += "<hr>";
+                    }
+                    oszlop.innerHTML += "<p id='" + mintermtomb[i][j].id + "' style='vertical-align: middle;'>" + mintermtomb[i][j].string + kulonbsegek + "</p>";
+                }
+            }
+        }
+    }
+
+    function numberToRoman(szam)
+    {
+        // Valószínű fölösleges, mert gyakorlatilag nem igazán lesz olyan,
+        // hogy 30 oszlopon keresztül veti össze a program a mintermeket.
+        // A függvény célja az arab számokból római számokat gyártani.
+        let romaiszam = "";
+        let tizesek = Math.floor(szam / 10);
+        let tiznelkisebb = szam % 10;
+        let maradvany = tiznelkisebb;
+        for(let i = 0; i < tizesek; i++)
+        {
+            romaiszam += "X";
+        }
+
+        if(tiznelkisebb == 4)
+        {
+            romaiszam += "IV";
+        }
+        else if(tiznelkisebb == 9)
+        {
+            romaiszam += "IX";
+        }
+        else
+        {
+            if(tiznelkisebb > 4 && tiznelkisebb < 9)
+            {
+                romaiszam += "V";
+                maradvany = tiznelkisebb - 5;
+            }
+
+            for(let i = 0; i < maradvany; i++)
+            {
+                romaiszam += "I";
+            }
+        }
+
+        return romaiszam
+    }
+
+    function kovetkezoBetu(karakter)
+    {
+        return String.fromCharCode(karakter.charCodeAt(0) + 1);
+    }
+
+    function szamToKarakter(szam)
+    {
+        const code = 'A'.charCodeAt(0);
+
+        return String.fromCharCode(code + szam);
+    }
+
+    function resetEverything()
+    {
+        // Minden új bevitelnél ez a függvény tisztítja meg a felületet az előző bevitel eredményeitől
+        primimplikansok = [];
+        mintermazonosito = 0;
+        jelenframe = 0;
+        animacioallapot = true;
+        animacio, valtozoszam;
+        for(let i = 1; i < 11; i++)
+        {
+            document.getElementById("szamolas-" + i).innerHTML = "";
+        }
+        for(let i = 2; i < 6; i++)
+        {
+            document.getElementById("mintermtabla-" + i).style.display = "none";
+        }
+        document.getElementById("mintermfej").style.display = "none";
+        document.getElementById('primimplikanstabla').innerHTML = "";
+        document.getElementById('aktualisosszevonas').innerHTML = "";
+        document.getElementById("primimplikansok").innerHTML = "";
+        clearTimeout(animacio);
+    }
+
+    function findEssentialPrime(primimplikansok, mintermarray)
+    {
+        // Ez a függvény állapítja meg, hogy a kapott prímimplikánsok közül melyek az alapvetőek
+        let essential = [];
+        let mintermdarab = mintermarray.length;
+        let primdarab = primimplikansok.length;
+
+        // Végigmegyünk a mintermeken egyesével
+        for(let m = 0; m < mintermdarab; m++)
+        {
+            let darabbanszerepel = 0;
+            let prim;
+            // Minden mintermnél összeszámoljuk, hogy hány prímimplikánsban találhatóak meg
+            for(let p = 0; p < primdarab; p++)
+            {
+                let primmintermdb = primimplikansok[p].mintermek.length;
+                for(let i = 0; i < primmintermdb; i++)
+                {
+                    // Ha megtaláltuk a mintermet egy prim implikánsban, eltároljuk, hogy melyikben
+                    if(mintermarray[m] == primimplikansok[p].mintermek[i].decimalis)
+                    {
+                        prim = primimplikansok[p];
+                        darabbanszerepel++;
+                        break;
+                    }
+                }
+
+                // Ha egy minterm több prim implikánsban is szerepel, továbblépünk a következő mintermre,
+                // mert ennek már nem lesz egyedi prímimplikánsa
+                if(darabbanszerepel > 1)
+                {
+                    break;
+                }
+            }
+            
+            if(darabbanszerepel == 1)
+            {
+                // Ha a megadott prímimplikáns még nem lett hozzáadva az alapvető prímimplkikánsok tömbjéhez, hozzáadjuk
+                if(!essential.includes(prim))
+                {
+                    essential.push(prim)
+                }
+            }
+        }
+
+        return essential;
+    }
+
+    function fennmaradoPrimek(primimplikansok, essential, mintermarray, foloop = true)
+    {
+        // Ez a függvény válogatja ki, hogy a nem alapvető prímimplikánsok közül
+        // melyeket használja a program a végeredmény előállításához
+        let final = [], mintermtofind = [], legtobbetlefedo;
+        let lefedettmax = 0;
+        let mintermdarab = mintermarray.length;
+        let primdarab = primimplikansok.length;
+        let essentialdb = essential.length;
+
+        // Először kigyüjtjük, hogy mely mintermeket nem fedik le alapvető prímimplikánsok
+        for(let m = 0; m < mintermdarab; m++)
+        {
+            let lefedve = false;
+            for(let e = 0; e < essentialdb; e++)
+            {
+                let essentialmintermdb = essential[e].mintermek.length;
+                for(let i = 0; i < essentialmintermdb; i++)
+                {
+                    // Ha megtaláltuk a mintermet egy alapvető prim implikánsban, továbblépünk a következő mintermre
+                    if(mintermarray[m] == essential[e].mintermek[i].decimalis)
+                    {
+                        // Ha az alapvető prímimplikáns még nem szerepel a kimenetben, hozzáadjuk
+                        // Erre azért van szükség, hogy a függvény meghívható legyen rukurzívan,
+                        // amíg el nem fogynak a fedetlen mintermek
+                        if(!final.includes(essential[e]))
+                        {
+                            final.push(essential[e]);
+                        }
+                        lefedve = true;
+                        break;
+                    }
+                }
+                if(lefedve)
+                {
+                    break;
+                }
+            }
+
+            // Ha az összes alapvető prímimplikáns átnézése után nem lett meg a minterm, kitesszük a keresendők tömbjébe
+            if(!lefedve)
+            {
+                mintermtofind.push(mintermarray[m]);
+            }
+        }
+
+        let keresendomintermdb = mintermtofind.length;
+        if(keresendomintermdb > 0)
+        {
+            for(let p = 0; p < primdarab; p++)
+            {
+                let lefedettdb = 0;
+                // Az alapvető prímimplikánsoknak minden mintermjét felhasználtuk, így azokkal itt nem foglalkozunk
+                // Ha ez az ellenőrzés nem lenne itt, nem lehetne rekurzívan meghívni ezt a függvényt
+                if(!final.includes(primimplikansok[p]))
+                {
+                    for(let m = 0; m < keresendomintermdb; m++)
+                    {
+                        let primmintermdb = primimplikansok[p].mintermek.length;
+                        for(let i = 0; i < primmintermdb; i++)
+                        {
+                            if(mintermtofind[m] == primimplikansok[p].mintermek[i].decimalis)
+                            {
+                                lefedettdb++
+                            }
+                        }
+                    }
+                }
+
+                // Ha ez a jelen prímimplikáns több mintermet fed le, mint az eddigi legnagyobb, akkor kiválasztjuk felhasználásra
+                if(lefedettdb > lefedettmax)
+                {
+                    lefedettmax = lefedettdb;
+                    legtobbetlefedo = primimplikansok[p];
+                }
+            }
+
+            final.push(legtobbetlefedo);
+        }
+
+        // Ha a keresendő mintermek darabszáma megegyezik a legtöbb mintermet lefedő prímimplikáns által lefedett mintermek darabszámával,
+        // akkor lefedtünk minden mintermet, és vissza lehet adni a végeredményt hívó felé. Ha a kettő nem egyezik,
+        // meghívjuk rekurzívan a jelen függvényt, amíg el nem fogynak a keresendő mintermek
+        if(keresendomintermdb != lefedettmax)
+        {
+            final = (fennmaradoPrimek(primimplikansok, final, mintermarray));
+        }
+
+        return final;
+    }
+
+    function binarisHely(szamorig, helyiertek)
+    {
+        let szam = szamorig * 1
+        let binarisertek = szam.toString(2).padStart(helyiertek, 0) // A számot binárissá alakítjuk, majd kiegészítjük a megfelelő számú nullával
+        let binarisbitenkent = binarisertek.split("");
+        for(let i = 0; i <= binarisbitenkent.length; i++)
+        {
+            if(binarisbitenkent[i] == 1)
+            {
+                return i;
+            }
+        }
+    }
+
+    function osszevonasokJelzese(primimplikans, bitszam)
+    {
+        // Ez a függvény jelzi a minterm táblában az összevonásokat
+        if(jelenframe > primimplikans.length - 1)
+        {
+            jelenframe = 0;
+        }
+        else if (jelenframe < 0)
+        {
+            jelenframe = primimplikans.length - 1;
+        }
+        
+        let mintermdb = primimplikans[jelenframe].mintermek.length;
+        let celladb = Math.pow(2, bitszam);
+
+        for(let m = 0; m < celladb; m++)
+        {
+            let cella = document.getElementById(bitszam + "-" + m);
+            cella.style.backgroundColor = "";
+        }
+
+        document.getElementById('aktualisosszevonas').innerHTML = "<h2>Jelzett összevonás</h2><p style='font-size: 1.4em'>(" + primimplikans[jelenframe].primazonosito + ") " + primimplikans[jelenframe].string + " => " + primimplikans[jelenframe].kifejezes + "</p>";
+        szin = szinek[Math.floor(Math.random() * szinek.length)];
+        for(let m = 0; m < mintermdb; m++)
+        {
+            let cella = document.getElementById(bitszam + "-" + primimplikans[jelenframe].mintermek[m].decimalis);
+            cella.style.backgroundColor = szin;
+        }
+
+        animacio = setTimeout(
+            function(){
+                if(jelenframe == primimplikans.length - 1)
+                {
+                    jelenframe = 0;
+                }
+                else
+                {
+                    jelenframe++;
+                }
+                osszevonasokJelzese(primimplikans, bitszam)
+            }, 2000
+        );
+    }
+
+    function animacioControl(action)
+    {
+        clearTimeout(animacio);
+        document.getElementById("startpause").innerText = "⏵";
+        if(action == "prev")
+        {
+            jelenframe--;
+            animacioallapot = false;
+        }
+
+        else if(action == "next")
+        {
+            jelenframe++;
+            animacioallapot = false;
+        }
+
+        else if(action == "startpause")
+        {
+            if(!animacioallapot)
+            {
+                document.getElementById("startpause").innerText = "⏸";
+                animacioallapot = true;
+            }
+            else
+            {
+                animacioallapot = false;
+            }
+        }
+
+        osszevonasokJelzese(primimplikansok, valtozoszam);
+        if(!animacioallapot)
+        {
+            clearTimeout(animacio);
+        }
+    }
+</script>
+</html>
