@@ -742,26 +742,6 @@
         return binaristomb;
     }
 
-    function verifyKettoHatvanya(szam)
-    {
-        // Ez a függvény állapítja meg, hogy egy szám kettő hatványa-e
-        if(szam == 0)
-        {
-            return false;
-        }
-
-        while(szam != 1)
-        {
-            if(szam % 2 != 0)
-            {
-                return false;
-            }
-
-            szam = szam / 2;
-        }
-        return true; 
-    }  
-
     function minTermOsszevetes(szetvalogatott, debug)
     {
         let tombdarab = szetvalogatott.length;
@@ -797,7 +777,7 @@
                             if(szetvalogatott[i][k].kulonbseg == szetvalogatott[i + sulykulonbseglepes][n].kulonbseg)
                             {
                                 let sulykulonbseg = szetvalogatott[i + sulykulonbseglepes][n].mintermek[0].decimalis - szetvalogatott[i][k].mintermek[0].decimalis;
-                                if(szetvalogatott[i][k].mintermek[0].decimalis < szetvalogatott[i + sulykulonbseglepes][n].mintermek[0].decimalis && verifyKettoHatvanya(sulykulonbseg))
+                                if(szetvalogatott[i][k].mintermek[0].decimalis < szetvalogatott[i + sulykulonbseglepes][n].mintermek[0].decimalis && Number.isInteger(Math.log2(sulykulonbseg)))
                                 {
                                     felhasznalt = true;
                                     let sorban = true;
